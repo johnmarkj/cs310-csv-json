@@ -92,12 +92,43 @@ public class Converter {
                 data.add(row);
             }
             
+            //************* Construct JSON String ****************
+            
+            // Add the row and column headers
+            
+            json.append("{\n   \"colHeaders\": ").append(colHeaders.toString());
+            json.append("{\n   \"rowHeaders\": ").append(rowHeaders.toString()).append(", \n");
+            
+            //Split data
+            
+            rows = data.toString().split("],");
+            
+            //Add data to the rows
+            
+            json.append("  \"data\": ");
+            
+            for(int i = 0; i < rows.length; i++){
+                String dat = rows[i];
+                dat = dat.replace("\"","");       //delete the double quotes
+                dat = dat.replace("]]", "]");     //replace last square brackets
+                
+                json.append(dat);     //append the rows
+                
+                //if last row, close the row and begin a new row
+                
+                if((i % rows.length) != (rows.length - 1)){
+                    json.append("], \n        ");
+                }
+            }
+            //close JSON String
+            
+            json.append("\n    ]\n}");
         }
         
         catch(IOException e) { return e.toString(); }
         
-        return results.trim();
-        
+        //return results.trim();
+        return json.toString();
     }
     
     public static String jsonToCsv(String jsonString) {
