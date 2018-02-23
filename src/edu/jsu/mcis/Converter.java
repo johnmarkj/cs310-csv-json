@@ -44,17 +44,53 @@ public class Converter {
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
         
+        //Creates a StringBuilder for json
+        StringBuilder json = new StringBuilder();
         String results = "";
         
         try {
             
             CSVReader reader = new CSVReader(new StringReader(csvString));
-            List<String[]> full = reader.readAll();
-            Iterator<String[]> iterator = full.iterator();
+            List<String[]> csv = reader.readAll();
+            Iterator<String[]> iterator = csv.iterator();
             
             JSONObject jsonObject = new JSONObject();
             
             // INSERT YOUR CODE HERE
+            
+            JSONArray rowHeaders = new JSONArray();
+            JSONArray colHeaders = new JSONArray();
+            JSONArray data = new JSONArray();
+            String[] rows;
+            
+            //First array from CSV column data; add elements to the colHeader array
+            colHeaders.addAll(Arrays.asList(iterator.next()));
+            
+            //Loop through the data from the rows in CSV
+            
+            while(iterator.hasNext()){
+                //Container for rows
+                
+                JSONArray row = new JSONArray();
+                
+                //Get the next array from CSV
+                
+                rows = iterator.next();
+                
+                //Get the first element from CSV and and to rowHeader
+                
+                rowHeaders.add(rows[0]);
+                
+                //Fill out the rest of the rows
+                
+                for(int i = 1; i < rows.length; i++){
+                    row.add(rows[i]);
+                }
+                
+                //add row to data
+                
+                data.add(row);
+            }
             
         }
         
