@@ -51,81 +51,28 @@ public class Converter {
         try {
             
             CSVReader reader = new CSVReader(new StringReader(csvString));
-            List<String[]> csv = reader.readAll();
-            Iterator<String[]> iterator = csv.iterator();
+            List<String[]> full = reader.readAll();
+            Iterator<String[]> iterator = full.iterator();
             
             JSONObject jsonObject = new JSONObject();
             
             // INSERT YOUR CODE HERE
             
-            JSONArray rowHeaders = new JSONArray();
-            JSONArray colHeaders = new JSONArray();
+            JSONArray rHeaders = new JSONArray();
+            JSONArray cHeaders = new JSONArray();
             JSONArray data = new JSONArray();
-            String[] rows;
-            
-            //First array from CSV column data; add elements to the colHeader array
-            colHeaders.addAll(Arrays.asList(iterator.next()));
-            
-            //Loop through the data from the rows in CSV
-            
-            while(iterator.hasNext()){
-                //Container for rows
-                
-                JSONArray row = new JSONArray();
-                
-                //Get the next array from CSV
-                
-                rows = iterator.next();
-                
-                //Get the first element from CSV and and to rowHeader
-                
-                rowHeaders.add(rows[0]);
-                
-                //Fill out the rest of the rows
-                
-                for(int i = 1; i < rows.length; i++){
-                    row.add(rows[i]);
-                }
-                
-                //add row to data
-                
-                data.add(row);
+            String[] cols;
+            cols = iterator.next();
+            for(String field : cols){
+                cHeaders.add(field);
             }
-            
-            //************* Construct JSON String ****************
-            
-            // Add the row and column headers
-            
-            json.append("{\n   \"colHeaders\": ").append(colHeaders.toString());
-            json.append("{\n   \"rowHeaders\": ").append(rowHeaders.toString()).append(", \n");
-            
-            //Split data
-            
-            rows = data.toString().split("],");
-            
-            //Add data to the rows
-            
-            json.append("  \"data\": ");
-            
-            for(int i = 0; i < rows.length; i++){
-                String dat = rows[i];
-                dat = dat.replace("\"","");       //delete the double quotes
-                dat = dat.replace("]]", "]");     //replace last square brackets
-                
-                json.append(dat);     //append the rows
-                
-                //if last row, close the row and begin a new row
-                
-                if((i % rows.length) != (rows.length - 1)){
-                    json.append("], \n        ");
-                }
-            }
-            //close JSON String
-            
-            json.append("\n    ]\n}");
+            jsonObject.put("colHeaders", cHeaders);
+             
         }
         
-        catch(IOException e) { return e.toString(); }
+        catch(IOException e) {
+            System.err.println(e.toString());
+        } 
         
         //return results.trim();
         return json.toString();
@@ -133,23 +80,81 @@ public class Converter {
     
     public static String jsonToCsv(String jsonString) {
         
-        String results = "";
+        //String results = "";
+        StringWriter writer = new StringWriter();
         
         try {
             
             JSONParser parser = new JSONParser();
-            JSONObject jsonObject = (JSONObject)parser.parse(jsonString);
+            JSONObject jobject = (JSONObject)parser.parse(jsonString);
+            JSONArray row = (JSONArray) jobject.get("rowHeaders");
+            JSONArray col = (JSONArray) jobject.get("colHeaders");
+            JSONArray data = (JSONArray) jobject.get("data");
             
-            StringWriter writer = new StringWriter();
-            CSVWriter csvWriter = new CSVWriter(writer, ',', '"', '\n');
+            //String array for OpenCSV
             
-            // INSERT YOUR CODE HERE
+            String[] csvCol = new String[col.size()];
+            String[] csvRow = new String[row.size()];
+            String[] csvData = new String[data.size()];
+            String[] rowData;
             
+            //Copy the column headers
+            
+            for(int i = 0; i < col.size(); i++){
+                csvCol[i] = col.get(i) + "";
+            }
+            
+            //Copy the row headers and the row data
+            
+            for(int i = 0; i < row.size(); i++){
+                csvRow[i] = row.get(i) + "";
+                csvData[i] = data.get(i) + "";
+            }
+            
+            
+            //StringWriter writer = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer, ',' , '"' , "\n" );
+            csvWriter.writeNext(csvCol);
+            
+            //Write column headers
+            
+            for(int i = 0; i < csvData.length; i++){
+                //Replace square brackets from the row
+                csvData[i] = csvData[i].replace("[","");
+                csvData[i] = csvData[i].replace("]","");
+            
+            
+                //Split data into elements
+            
+                String[] elements = csvData[i].split(",");
+                
+                //Create a container for row data
+                
+                rowData = new String[elements.length + 1];
+                
+                //Copy the row header into the first element of rowData
+                
+                rowData[0] = csvRow[i];
+                
+                //Copy the rest of rowData
+                
+                for(int j = 0; j < elements.length; j++){
+                    rowData[j+1] = elements[j];
+                }
+                
+                //Write new row
+                
+                
+                csvWriter.writeNext(rowData);
+                
+            }
         }
         
-        catch(ParseException e) { return e.toString(); }
+        catch(ParseException e){
+            System.err.println(e.toString());
+        }
         
-        return results.trim();
+        return writer.toString();
         
     }
 	
